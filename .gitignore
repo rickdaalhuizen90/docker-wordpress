@@ -1,0 +1,9 @@
+/**/*.DS_Store
+/vendor/
+/node_modules/
+*.log
+yarn-debug.log*
+yarn-error.log*
+.env
+/site/*
+!/site/.gitkeep

@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@commitlint/cli": "^12.1.1",
+    "@commitlint/config-conventional": "^12.1.1"
+  },
+  "devDependencies": {
+    "husky": "^6.0.0"
+  }
+}

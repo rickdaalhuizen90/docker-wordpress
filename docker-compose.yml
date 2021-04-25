@@ -1,0 +1,105 @@
+version: '3.9'
+
+networks:
+  wp-network:
+
+services:
+  wordpress:
+    image: wordpress:${WORDPRESS_VERSION}-php${PHP_VERSION}-fpm-alpine
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WPFPM_WP_REDIS_HOST: redis
+      WPFPM_RT_WP_NGINX_HELPER_CACHE_PATH: /tmp/cache
+      WP_PLUGINS: >-
+        redis-cache
+        advanced-custom-fields
+        redirection
+        wordpress-seo
+      ENABLE_HYPERDB: 0
+      WP_DEBUG: 'true'
+    volumes:
+      - ./site:/var/www/html
+        #- ./wp-content/themes/:/var/www/html/wp-content/themes/
+        #- ./wp-content/plugins/:/var/www/html/wp-contents/plugins/
+        #- ./wp-content/uploads:/var/www/html/wp-content/uploads
+    depends_on:
+      - mysql
+      - redis
+      - mailhog
+    networks:
+      - wp-network
+  
+  nginx:
+    image: nginx:1.19.10-alpine
+    restart: unless-stopped
+    ports:
+      - 80:80
+    volumes:
+      - ./site:/var/www/html:rw,cached
+      - ./config/nginx.conf:/etc/nginx/conf.d/default.conf
+      - certbot-data:/etc/letsencrypt
+    networks:
+      - wp-network
+
+  certbot:
+    depends_on:
+      - nginx
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot-data:/etc/letsencrypt
+      - ./site:/var/www/html
+    command: certonly --webroot --webroot-path=/var/www/html --email info@example.com --agree-tos --no-eff-email --force-renewal -d example.com -d www.example.com
+    networks:
+      - wp-network
+
+  mysql:
+    image: mariadb:10.5.9
+    command: mysqld --innodb-buffer-pool-size=20M
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - wp-network
+
+  redis:
+    image: redis:6.2.2-alpine
+    networks:
+      - wp-network
+
+  mailhog:
+    image: mailhog/mailhog
+    logging:
+      driver: 'none'
+    ports:
+      - 1025:1025
+      - 8025:8025
+    networks:
+      - wp-network
+
+  cli:
+    image: wordpress:cli-2.4-php${PHP_VERSION}
+    depends_on:
+      - wordpress
+      - mysql
+    volumes:
+      - ./site:/var/www/html
+    networks:
+      - wp-network
+    entrypoint: wp
+    environment:
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+
+volumes:
+  db-data:
+  certbot-data:

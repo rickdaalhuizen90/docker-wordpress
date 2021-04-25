@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<ruleset name="Roots">
+	<description>Wordpress Coding Standard</description>
+
+  	<!-- Scan all files in directory -->
+  	<file>/var/www/html/wp-content/plugins</file>
+	<file>/var/www/html/wp-contents/themes</file>
+  	<!-- Scan only PHP files -->
+  	<arg name="extensions" value="php"/>
+
+  	<!-- Exclude WP Core folders and files from being checked. -->
+  	<exclude-pattern>vendor/</exclude-pattern>
+
+  	<!-- Show colors in console -->
+  	<arg value="-colors"/>
+
+  	<!-- Show sniff codes in all reports -->
+  	<arg value="ns"/>
+
+  	<!-- Use PSR-2 as a base -->
+  	<rule ref="PSR2"/>
+</ruleset>
